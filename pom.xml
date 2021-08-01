@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>io.cloudonix</groupId>
+	<artifactId>vertx-java.io</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Vert.x Java IO</name>
+	<description>Utilities for integrating Vert.x IO with Java IO</description>
+	
+	<properties>
+		<vertx.version>4.1.2</vertx.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-core</artifactId>
+			<version>${vertx.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-junit5</artifactId>
+			<version>${vertx.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
