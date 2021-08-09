@@ -4,12 +4,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.cloudonix</groupId>
 	<artifactId>vertx-java.io</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>Vert.x Java IO</name>
 	<description>Utilities for integrating Vert.x IO with Java IO</description>
 	
 	<properties>
 		<vertx.version>4.1.2</vertx.version>
+		<maven.compiler.release>11</maven.compiler.release>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
 
 	<dependencies>
@@ -24,5 +27,12 @@
 			<version>${vertx.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.hamcrest</groupId>
+			<artifactId>hamcrest-core</artifactId>
+			<version>2.2</version>
+		<scope>test</scope>
+</dependency>
+
 	</dependencies>
 </project>
