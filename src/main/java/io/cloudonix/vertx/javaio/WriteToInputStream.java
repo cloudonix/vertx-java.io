@@ -47,7 +47,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 				this.completion.tryComplete();
 				return -1;
 			}
-			int val = data.getByte(position++);
+			int val = 0xFF & data.getByte(position++); // get byte's bitwise value, which is what InputStream#read() is supposed to return
 			if (position > data.length())
 				completion.tryComplete();
 			return val;
