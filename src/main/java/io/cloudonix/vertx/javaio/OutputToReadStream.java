@@ -18,9 +18,9 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 	private AtomicReference<CountDownLatch> paused = new AtomicReference<>(new CountDownLatch(0));
 	private boolean closed;
 	private AtomicLong demand = new AtomicLong(0);
-	private Handler<Void> endHandler;
-	private Handler<Buffer> dataHandler;
-	private Handler<Throwable> errorHandler;
+	private Handler<Void> endHandler = v -> {};
+	private Handler<Buffer> dataHandler = d -> {};
+	private Handler<Throwable> errorHandler = t -> {};
 	private Context context;
 	
 	public OutputToReadStream(Vertx vertx) {
@@ -43,17 +43,26 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 			try (is) {
 				is.transferTo(this);
 				p.complete();
-			} catch (IOException e) {
+			} catch (Throwable e) {
 				p.fail(e);
 			}
-		}).onFailure(t -> {
-			if (errorHandler != null)
-				errorHandler.handle(t);
-		}).onSuccess(v -> {
-			if (endHandler != null)
-				endHandler.handle(null);
-		});
+		}).onFailure(errorHandler::handle).onSuccess(v -> endHandler.handle(null));
 		return this;
+	}
+	
+	/**
+	 * Propagate an out-of-band error (likely generated or handled by the code that feeds the output stream) to the end of the 
+	 * read stream to let them know that the result is not going to be good.
+	 * @param t error to be propagated down the stream
+	 */
+	public void sendError(Throwable t) {
+		context.executeBlocking(p -> {
+			try {
+				errorHandler.handle(t);
+			} finally {
+				p.tryComplete();
+			}
+		});
 	}
 	
 	/* ReadStream stuff */
