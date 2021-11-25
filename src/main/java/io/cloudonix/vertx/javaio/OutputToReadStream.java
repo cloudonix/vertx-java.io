@@ -158,10 +158,7 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 					dataHandler.handle(data);
 				awaiter.countDown();
 			} catch (Throwable t) {
-				if (errorHandler != null)
-					errorHandler.handle(t);
-				else
-					System.err.println("Unexpected exception in OutputToReadStream and no error handler: " + t);
+				errorHandler.handle(t);
 			}
 		});
 		try {
