@@ -138,8 +138,8 @@ class OutputToReadStreamTest {
 		var cp = ctx.checkpoint();
 		var source = new ByteArrayInputStream("hello world".getBytes());
 		var testBuffer = Buffer.buffer();
-		try (var os = new OutputToReadStream(vertx)) {
-			os.pipeTo(new WriteStream<Buffer>() {
+		try (final var os = new OutputToReadStream(vertx); final var is = source) {
+			os.exceptionHandler(ctx::failNow).pipeTo(new WriteStream<Buffer>() {
 				@Override
 				public boolean writeQueueFull() {
 					return false;
@@ -177,7 +177,7 @@ class OutputToReadStreamTest {
 					return this;
 				}
 			});
-			os.wrap(source).endHandler(v -> cp.flag());
+			is.transferTo(os);
 		}
 		ctx.awaitCompletion(3, TimeUnit.SECONDS);
 		assertThat(testBuffer.toString(), is(equalTo("hello world")));
