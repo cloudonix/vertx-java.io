@@ -3,6 +3,7 @@ package io.cloudonix.vertx.javaio;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,13 +72,13 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 	public OutputToReadStream exceptionHandler(Handler<Throwable> handler) {
 		// we are usually not propagating exceptions as OutputStream has no mechanism for propagating exceptions down,
 		// except when wrapping an input stream, in which case we can forward InputStream read errors to the error handler.
-		errorHandler = handler;
+		errorHandler = Objects.requireNonNull(handler);
 		return this;
 	}
 
 	@Override
 	public OutputToReadStream handler(Handler<Buffer> handler) {
-		this.dataHandler = handler;
+		this.dataHandler = Objects.requireNonNull(handler);
 		return this;
 	}
 
@@ -102,7 +103,7 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 
 	@Override
 	public OutputToReadStream endHandler(Handler<Void> endHandler) {
-		this.endHandler = endHandler;
+		this.endHandler = Objects.requireNonNull(endHandler);
 		return this;
 	}
 
