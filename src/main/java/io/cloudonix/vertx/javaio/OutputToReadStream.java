@@ -134,6 +134,8 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 
 	@Override
 	synchronized public void close() throws IOException {
+		if (closed)
+			throw new IOException("OutputStream is already closed!");
 		closed = true;
 		try {
 			paused.get().await();
