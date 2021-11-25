@@ -16,6 +16,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.WriteStream;
 
+/**
+ * A conversion utility to help move data from a Vert.x asynchronous stream to Java classic blocking IO.
+ * 
+ * Use this class to create a {@link WriteStream} that buffers data written to it so that a consumer
+ * can use the {@link InputStream} API to read it.
+ * 
+ * The default queue size is 1000 writes, but it can be changed using {@link #setWriteQueueMaxSize(int)}
+ * 
+ * @author guss77
+ */
 public class WriteToInputStream extends InputStream implements WriteStream<Buffer>{
 	
 	private class PendingWrite {
