@@ -16,6 +16,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.WriteStream;
 
+/**
+ * A conversion utility to help move data from a Vert.x asynchronous stream to Java classic blocking IO.
+ * 
+ * Use this class to create a {@link WriteStream} that buffers data written to it so that a consumer
+ * can use the {@link InputStream} API to read it.
+ * 
+ * The default queue size is 1000 writes, but it can be changed using {@link #setWriteQueueMaxSize(int)}
+ * 
+ * @author guss77
+ */
 public class WriteToInputStream extends InputStream implements WriteStream<Buffer>{
 	
 	private class PendingWrite {
@@ -145,19 +155,21 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	
 	@Override
 	synchronized public int read() throws IOException {
-		while (!buffer.isEmpty() && buffer.peek().shouldDiscard()) buffer.poll();
-		if (!buffer.isEmpty())
-			return buffer.peek().readNext();
-		// set latch to signal we are waiting
-		var latch = new CountDownLatch(1);
-		readsWaiting.add(latch);
-		if (buffer.isEmpty())
-			try {
-				latch.await();
-			} catch (InterruptedException e) {
-				throw new IOException("Failed to wait for data", e);
-			}
-		return read(); // try to read again
+		while (true) {
+			while (!buffer.isEmpty() && buffer.peek().shouldDiscard()) buffer.poll();
+			if (!buffer.isEmpty())
+				return buffer.peek().readNext();
+			// set latch to signal we are waiting
+			var latch = new CountDownLatch(1);
+			readsWaiting.add(latch);
+			if (buffer.isEmpty())
+				try {
+					latch.await();
+				} catch (InterruptedException e) {
+					throw new IOException("Failed to wait for data", e);
+				}
+			// now try to read again
+		}
 	}
 	
 	@Override
@@ -174,7 +186,6 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 			return val;
 		b[off] = (byte) (val & 0xFF);
 		return 1 + read(b, off + 1, len - 1);
-		
 	}
 
 	@Override
