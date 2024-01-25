@@ -77,7 +77,8 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 
 	private Handler<Void> drainHandler;
 	private Handler<Throwable> errorHandler;
-	volatile int maxSize = 1000;
+	private volatile int maxSize = 1000;
+	private volatile int maxBufferSize = Integer.MAX_VALUE;
 	private ConcurrentLinkedQueue<PendingWrite> buffer = new ConcurrentLinkedQueue<>();
 	private AtomicBoolean everFull = new AtomicBoolean();
 	private ConcurrentLinkedQueue<CountDownLatch> readsWaiting = new ConcurrentLinkedQueue<>();
@@ -105,7 +106,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	/* WriteStream stuff */
 	
 	@Override
-	public WriteStream<Buffer> drainHandler(Handler<Void> handler) {
+	public WriteToInputStream drainHandler(Handler<Void> handler) {
 		this.drainHandler = handler;
 		return this;
 	}
@@ -117,7 +118,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	}
 
 	@Override
-	public WriteStream<Buffer> exceptionHandler(Handler<Throwable> handler) {
+	public WriteToInputStream exceptionHandler(Handler<Throwable> handler) {
 		// we don't have a way to propagate errors as we don't actually handle writing out and InputStream provides no feedback mechanism.
 		errorHandler = handler;
 		return this;
@@ -126,7 +127,14 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	@Override
 	public Future<Void> write(Buffer data) {
 		var promise = Promise.<Void>promise();
-		buffer.add(new PendingWrite(data, promise));
+		if (data == null) // end of stream
+			buffer.add(new PendingWrite(null, promise));
+		else
+			for (int start = 0; start < data.length();) {
+				var buf = data.length() < maxBufferSize ? data : data.getBuffer(start, Math.min(data.length(), start + maxBufferSize));
+				start += buf.length();
+				buffer.add(new PendingWrite(buf, start < data.length() ? Promise.promise() : promise));
+			}
 		// flush waiting reads, if any
 		for (var l = readsWaiting.poll(); l != null; l = readsWaiting.poll()) l.countDown();
 		return promise.future();
@@ -138,8 +146,13 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	}
 
 	@Override
-	public WriteStream<Buffer> setWriteQueueMaxSize(int maxSize) {
+	public WriteToInputStream setWriteQueueMaxSize(int maxSize) {
 		this.maxSize = maxSize;
+		return this;
+	}
+	
+	public WriteToInputStream setMaxChunkSize(int maxSize) {
+		maxBufferSize = maxSize;
 		return this;
 	}
 

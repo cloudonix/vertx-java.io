@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.streams.ReadStream;
@@ -155,11 +156,37 @@ class WriteToInputStreamTest {
 	
 	@Test
 	public void testConvert(Vertx vertx, VertxTestContext ctx) throws IOException {
-		var cp = ctx.checkpoint();
 		var sink = new ByteArrayOutputStream();
+		var result = Promise.<Void>promise();
 		try (var os = new WriteToInputStream(vertx)) {
-			os.wrap(sink).end(Buffer.buffer("hello world")).onSuccess(v -> cp.flag()).onFailure(ctx::failNow);
+			os.wrap(sink).end(Buffer.buffer("hello world")).onComplete(result);
 		}
-		assertThat(sink.toByteArray(), is(equalTo("hello world".getBytes())));
+		result.future()
+		.map(__ -> {
+			System.out.println("Testing output stream result...");
+			assertThat(sink.toByteArray(), is(equalTo("hello world".getBytes())));
+			return null;
+		})
+		.onComplete(ctx.succeedingThenComplete());
 	}
+	
+	
+	@Test
+	public void testReChunkedWrites(Vertx vertx, VertxTestContext ctx) throws IOException {
+		var data = "hello world, this is a longish text which will be chunks";
+		var sink = new ByteArrayOutputStream();
+		var result = Promise.<Void>promise();
+		try (var os = new WriteToInputStream(vertx)) {
+			os.setMaxChunkSize(10).wrap(sink)
+			.end(Buffer.buffer(data)).onComplete(result);
+		}
+		result.future()
+		.map(__ -> {
+			System.out.println("Testing output stream result...");
+			assertThat(sink.toByteArray(), is(equalTo(data.getBytes())));
+			return null;
+		})
+		.onComplete(ctx.succeedingThenComplete());
+	}
+
 }
