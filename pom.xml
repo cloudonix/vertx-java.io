@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.cloudonix</groupId>
 	<artifactId>vertx-java.io</artifactId>
-	<version>1.1.0</version>
+	<version>1.2.0</version>
 	<name>Vert.x Java IO</name>
 	<description>Utilities for integrating Vert.x IO with Java IO</description>
 	
 	<properties>
-		<vertx.version>4.1.5</vertx.version>
+		<vertx.version>4.1.8</vertx.version>
 		<maven.compiler.release>11</maven.compiler.release>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
