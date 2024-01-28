@@ -3,6 +3,7 @@ package io.cloudonix.vertx.javaio;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,7 +36,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		
 		private PendingWrite(Buffer data, Promise<Void> completion) {
 			this.data = data;
-			this.completion = completion;
+			this.completion = Objects.requireNonNullElse(completion, Promise.promise());
 		}
 		
 		public boolean shouldDiscard() {
@@ -75,8 +76,8 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		}
 	}
 
-	private Handler<Void> drainHandler;
-	private Handler<Throwable> errorHandler;
+	private Handler<Void> drainHandler = __ -> {};
+	private Handler<Throwable> errorHandler = t -> {};
 	private volatile int maxSize = 1000;
 	private volatile int maxBufferSize = Integer.MAX_VALUE;
 	private ConcurrentLinkedQueue<PendingWrite> buffer = new ConcurrentLinkedQueue<>();
@@ -133,7 +134,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 			for (int start = 0; start < data.length();) {
 				var buf = data.length() < maxBufferSize ? data : data.getBuffer(start, Math.min(data.length(), start + maxBufferSize));
 				start += buf.length();
-				buffer.add(new PendingWrite(buf, start < data.length() ? Promise.promise() : promise));
+				buffer.add(new PendingWrite(buf, start < data.length() ? null : promise));
 			}
 		// flush waiting reads, if any
 		for (var l = readsWaiting.poll(); l != null; l = readsWaiting.poll()) l.countDown();
