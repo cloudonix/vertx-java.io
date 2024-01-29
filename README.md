@@ -19,7 +19,7 @@ Then add a dependency on this library:
 <dependency>
     <groupId>com.github.cloudonix</groupId>
     <artifactId>vertx-java.io</artifactId>
-    <version>1.1.0</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
