@@ -82,6 +82,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	private volatile int maxBufferSize = Integer.MAX_VALUE;
 	private ConcurrentLinkedQueue<PendingWrite> buffer = new ConcurrentLinkedQueue<>();
 	private AtomicBoolean everFull = new AtomicBoolean();
+	private volatile boolean closed = false;
 	private ConcurrentLinkedQueue<CountDownLatch> readsWaiting = new ConcurrentLinkedQueue<>();
 	private Context context;
 
@@ -127,6 +128,9 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 
 	@Override
 	public Future<Void> write(Buffer data) {
+		if (closed)
+			// accept all data and discard it, as unlike JDK9 Flow, we have no way to tell upstream to stop sending data
+			return Future.succeededFuture();
 		var promise = Promise.<Void>promise();
 		if (data == null) // end of stream
 			buffer.add(new PendingWrite(null, promise));
@@ -207,4 +211,15 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		return buffer.stream().map(PendingWrite::available).reduce(0, (i,a) -> i += a);
 	}
 	
+	@Override
+	public void close() throws IOException {
+		super.close();
+		closed = true; // mark us closed, so that additional writes are NOPed
+		// if we have any buffered data, flush it and trigger the write completions
+		while (!buffer.isEmpty())
+			buffer.poll().completion.tryComplete();
+		// see if we need to call the drain handler to drain upstream
+		if (everFull.compareAndSet(true, false))
+			context.runOnContext(drainHandler::handle);
+	}
 }
