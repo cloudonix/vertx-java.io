@@ -203,7 +203,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		if (val < 0)
 			return val;
 		b[off] = (byte) (val & 0xFF);
-		return 1 + read(b, off + 1, len - 1);
+		return 1 + Math.max(0, read(b, off + 1, len - 1));
 	}
 
 	@Override
