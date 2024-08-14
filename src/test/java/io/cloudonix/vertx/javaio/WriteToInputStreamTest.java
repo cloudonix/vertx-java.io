@@ -158,16 +158,17 @@ class WriteToInputStreamTest {
 	public void testConvert(Vertx vertx, VertxTestContext ctx) throws IOException {
 		var sink = new ByteArrayOutputStream();
 		var result = Promise.<Void>promise();
-		try (var os = new WriteToInputStream(vertx)) {
-			os.wrap(sink).end(Buffer.buffer("hello world")).onComplete(result);
-		}
+		var os = new WriteToInputStream(vertx);
+		os.wrap(sink).onComplete(result);
+		os.end(Buffer.buffer("hello world"));
 		result.future()
 		.map(__ -> {
 			System.out.println("Testing output stream result...");
 			assertThat(sink.toByteArray(), is(equalTo("hello world".getBytes())));
 			return null;
 		})
-		.onComplete(ctx.succeedingThenComplete());
+		.onComplete(ctx.succeedingThenComplete())
+		.onComplete(__ -> ctx.verify(os::close));
 	}
 	
 	
@@ -176,16 +177,18 @@ class WriteToInputStreamTest {
 		var data = "hello world, this is a longish text which will be chunks";
 		var sink = new ByteArrayOutputStream();
 		var result = Promise.<Void>promise();
-		try (var os = new WriteToInputStream(vertx)) {
-			os.setMaxChunkSize(10).wrap(sink)
-			.end(Buffer.buffer(data)).onComplete(result);
-		}
+		var os = new WriteToInputStream(vertx);
+		os.setMaxChunkSize(10).wrap(sink).onComplete(result);
+		os.end(Buffer.buffer(data));
 		result.future()
 		.map(__ -> {
 			System.out.println("Testing output stream result...");
 			assertThat(sink.toByteArray(), is(equalTo(data.getBytes())));
 			return null;
 		})
+		.onComplete(ctx.succeedingThenComplete())
+		.onComplete(__ -> ctx.verify(os::close));
+	}
 		.onComplete(ctx.succeedingThenComplete());
 	}
 

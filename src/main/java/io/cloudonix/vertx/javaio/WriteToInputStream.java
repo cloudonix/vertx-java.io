@@ -90,8 +90,15 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		context = vertx.getOrCreateContext();
 	}
 	
-	public WriteToInputStream wrap(OutputStream os) {
-		context.executeBlocking(p -> {
+	/**
+	 * Runs {@link #transferTo(OutputStream)} as a blocking task in the Vert.x context
+	 * @param os Output stream to transfer the contents of this {@linkplain WriteStream} to
+	 * @return a promise that will resolve when the {@linkplain WriteStream} has been closed
+	 *   and all data successfully transfered to the {@linkplain OutputStream}, or reject if
+	 *   there was either a {@linkplain WriteStream} error or an {@linkplain IOException}
+	 */
+	public Future<Void> wrap(OutputStream os) {
+		return context.executeBlocking(p -> {
 			try (os) {
 				transferTo(os);
 				p.complete();
@@ -101,8 +108,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		}).onFailure(t -> {
 			if (errorHandler != null)
 				errorHandler.handle(t);
-		});
-		return this;
+		}).mapEmpty();
 	}
 	
 	/* WriteStream stuff */
