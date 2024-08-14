@@ -40,7 +40,7 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		}
 		
 		public boolean shouldDiscard() {
-			if (data == null || position >= data.length()) {
+			if (data != null && position >= data.length()) {
 				completion.tryComplete();
 				if (everFull.compareAndSet(true, false))
 					context.runOnContext(drainHandler::handle);
