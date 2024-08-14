@@ -201,29 +201,44 @@ class WriteToInputStreamTest {
 	@Test
 	public void testSingleByte(Vertx vertx, VertxTestContext ctx) throws IOException {
 		log.log(Level.INFO, "Starting testSingleByte");
-		var v = vertx.getOrCreateContext();
-		v.runOnContext(__ -> log.log(Level.INFO, "starting"));
 		var data = new byte[] { 0x31 };
 		var sink = new byte[4];
 		var is = new WriteToInputStream(vertx);
 		vertx.runOnContext(__ -> {
 		Future.succeededFuture()
 		.compose(___ -> {
-			log.log(Level.INFO, "Waiting before write");
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) { }
-			log.log(Level.INFO, "Writing and closing");
 			return is.end(Buffer.buffer(data));
 		})
-		.onComplete(___ -> log.log(Level.INFO, "Finished writing"))
 		.onComplete(ctx.succeedingThenComplete());
 		});
-		log.log(Level.INFO, "Testing reading from write stream");
 		var read = is.read(sink, 0, sink.length);
 		assertThat(sink, is(equalTo(new byte[] { 0x31, 0x00, 0x00, 0x00 })));
 		assertThat(read, is(equalTo(1)));
-		log.log(Level.INFO, "Finished reading from write stream");
+		is.close();
+	}
+	
+	@Test
+	public void testTwoBytes(Vertx vertx, VertxTestContext ctx) throws IOException {
+		log.log(Level.INFO, "Starting testTwoBytes");
+		var data = new byte[] { 0x31, 0x32 };
+		var sink = new byte[4];
+		var is = new WriteToInputStream(vertx);
+		vertx.runOnContext(__ -> {
+		Future.succeededFuture()
+		.compose(___ -> {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) { }
+			return is.end(Buffer.buffer(data));
+		})
+		.onComplete(ctx.succeedingThenComplete());
+		});
+		var read = is.read(sink, 0, sink.length);
+		assertThat(sink, is(equalTo(new byte[] { 0x31, 0x32, 0x00, 0x00 })));
+		assertThat(read, is(equalTo(2)));
 		is.close();
 	}
 
