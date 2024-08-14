@@ -5,10 +5,13 @@ import static org.hamcrest.CoreMatchers.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -19,9 +22,12 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 class WriteToInputStreamTest {
+	
+	private final static Logger log = System.getLogger(WriteToInputStream.class.getName());
 
 	@Test
 	void test(Vertx vertx, VertxTestContext ctx) throws IOException, InterruptedException {
+		log.log(Level.INFO, "Starting test");
 		var text = "hello world";
 		var sink = new ByteArrayOutputStream();
 		var cp = ctx.checkpoint();
@@ -83,6 +89,7 @@ class WriteToInputStreamTest {
 
 	@Test
 	void testLargeTransfer(Vertx vertx, VertxTestContext ctx) throws IOException, InterruptedException {
+		log.log(Level.INFO, "Starting testLargeTransfer");
 		var text = "hello world";
 		int count = 10000;
 		var sink = new ByteArrayOutputStream();
@@ -156,37 +163,83 @@ class WriteToInputStreamTest {
 	
 	@Test
 	public void testConvert(Vertx vertx, VertxTestContext ctx) throws IOException {
+		log.log(Level.INFO, "Starting testConvert");
 		var sink = new ByteArrayOutputStream();
 		var result = Promise.<Void>promise();
-		try (var os = new WriteToInputStream(vertx)) {
-			os.wrap(sink).end(Buffer.buffer("hello world")).onComplete(result);
-		}
+		var os = new WriteToInputStream(vertx);
+		os.wrap(sink).onComplete(result);
+		os.end(Buffer.buffer("hello world"));
 		result.future()
 		.map(__ -> {
-			System.out.println("Testing output stream result...");
+			log.log(Level.INFO, "Testing output stream result...");
 			assertThat(sink.toByteArray(), is(equalTo("hello world".getBytes())));
 			return null;
 		})
-		.onComplete(ctx.succeedingThenComplete());
+		.onComplete(ctx.succeedingThenComplete())
+		.onComplete(__ -> ctx.verify(os::close));
 	}
-	
 	
 	@Test
 	public void testReChunkedWrites(Vertx vertx, VertxTestContext ctx) throws IOException {
+		log.log(Level.INFO, "Starting testReChunkedWrites");
 		var data = "hello world, this is a longish text which will be chunks";
 		var sink = new ByteArrayOutputStream();
 		var result = Promise.<Void>promise();
-		try (var os = new WriteToInputStream(vertx)) {
-			os.setMaxChunkSize(10).wrap(sink)
-			.end(Buffer.buffer(data)).onComplete(result);
-		}
+		var os = new WriteToInputStream(vertx);
+		os.setMaxChunkSize(10).wrap(sink).onComplete(result);
+		os.end(Buffer.buffer(data));
 		result.future()
 		.map(__ -> {
-			System.out.println("Testing output stream result...");
+			log.log(Level.INFO, "Testing output stream result...");
 			assertThat(sink.toByteArray(), is(equalTo(data.getBytes())));
 			return null;
 		})
+		.onComplete(ctx.succeedingThenComplete())
+		.onComplete(__ -> ctx.verify(os::close));
+	}
+	
+	@Test
+	public void testSingleByte(Vertx vertx, VertxTestContext ctx) throws IOException {
+		log.log(Level.INFO, "Starting testSingleByte");
+		var data = new byte[] { 0x31 };
+		var sink = new byte[4];
+		var is = new WriteToInputStream(vertx);
+		vertx.runOnContext(__ -> {
+		Future.succeededFuture()
+		.compose(___ -> {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) { }
+			return is.end(Buffer.buffer(data));
+		})
 		.onComplete(ctx.succeedingThenComplete());
+		});
+		var read = is.read(sink, 0, sink.length);
+		assertThat(sink, is(equalTo(new byte[] { 0x31, 0x00, 0x00, 0x00 })));
+		assertThat(read, is(equalTo(1)));
+		is.close();
+	}
+	
+	@Test
+	public void testTwoBytes(Vertx vertx, VertxTestContext ctx) throws IOException {
+		log.log(Level.INFO, "Starting testTwoBytes");
+		var data = new byte[] { 0x31, 0x32 };
+		var sink = new byte[4];
+		var is = new WriteToInputStream(vertx);
+		vertx.runOnContext(__ -> {
+		Future.succeededFuture()
+		.compose(___ -> {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) { }
+			return is.end(Buffer.buffer(data));
+		})
+		.onComplete(ctx.succeedingThenComplete());
+		});
+		var read = is.read(sink, 0, sink.length);
+		assertThat(sink, is(equalTo(new byte[] { 0x31, 0x32, 0x00, 0x00 })));
+		assertThat(read, is(equalTo(2)));
+		is.close();
 	}
 
 }
