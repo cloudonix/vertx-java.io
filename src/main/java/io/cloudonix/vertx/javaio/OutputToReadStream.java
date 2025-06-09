@@ -206,9 +206,10 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 					endHandler.handle(null);
 				else
 					dataHandler.handle(data);
-				awaiter.countDown();
 			} catch (Throwable t) {
 				errorHandler.handle(t);
+			} finally {
+				awaiter.countDown();
 			}
 		});
 		try {
