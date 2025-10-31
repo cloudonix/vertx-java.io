@@ -51,13 +51,13 @@ class OutputToReadStreamTest {
 			return this;
 		}
 
-        @Override
-        public Future<Void> end() {
-            resultHandler.handle(null);
-            return Future.succeededFuture();
-        }
+		@Override
+		public Future<Void> end() {
+			resultHandler.handle(null);
+			return Future.succeededFuture();
+		}
 
-        @Override
+		@Override
 		public WriteStream<Buffer> drainHandler(Handler<Void> handler) {
 			return this;
 		}
