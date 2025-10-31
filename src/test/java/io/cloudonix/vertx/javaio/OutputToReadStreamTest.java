@@ -34,12 +34,7 @@ class OutputToReadStreamTest {
 		public boolean writeQueueFull() {
 			return false;
 		}
-		
-		@Override
-		public void write(Buffer data, Handler<AsyncResult<Void>> handler) {
-			write(data).onComplete(handler);
-		}
-		
+
 		@Override
 		public Future<Void> write(Buffer data) {
 			output.appendBuffer(data);
@@ -55,14 +50,14 @@ class OutputToReadStreamTest {
 		public WriteStream<Buffer> exceptionHandler(Handler<Throwable> handler) {
 			return this;
 		}
-		
-		@Override
-		public void end(Handler<AsyncResult<Void>> handler) {
-			resultHandler.handle(null);
-			handler.handle(Future.succeededFuture());
-		}
-		
-		@Override
+
+        @Override
+        public Future<Void> end() {
+            resultHandler.handle(null);
+            return Future.succeededFuture();
+        }
+
+        @Override
 		public WriteStream<Buffer> drainHandler(Handler<Void> handler) {
 			return this;
 		}
