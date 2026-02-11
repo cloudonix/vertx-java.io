@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -98,13 +97,11 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	 *   there was either a {@linkplain WriteStream} error or an {@linkplain IOException}
 	 */
 	public Future<Void> wrap(OutputStream os) {
-		return context.executeBlocking(p -> {
+		return context.executeBlocking(() -> {
 			try (os) {
 				transferTo(os);
-				p.complete();
-			} catch (Throwable t) {
-				p.fail(t);
 			}
+			return null;
 		}).onFailure(t -> {
 			if (errorHandler != null)
 				errorHandler.handle(t);
@@ -120,9 +117,9 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 	}
 
 	@Override
-	public void end(Handler<AsyncResult<Void>> handler) {
+	public Future<Void> end() {
 		// signal end of stream by writing a null buffer
-		write(null, handler);
+		return write(null);
 	}
 
 	@Override
@@ -149,11 +146,6 @@ public class WriteToInputStream extends InputStream implements WriteStream<Buffe
 		// flush waiting reads, if any
 		for (var l = readsWaiting.poll(); l != null; l = readsWaiting.poll()) l.countDown();
 		return promise.future();
-	}
-
-	@Override
-	public void write(Buffer data, Handler<AsyncResult<Void>> handler) {
-		write(data).onComplete(handler);
 	}
 
 	@Override
