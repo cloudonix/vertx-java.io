@@ -36,11 +36,6 @@ class OutputToReadStreamTest {
 		}
 		
 		@Override
-		public void write(Buffer data, Handler<AsyncResult<Void>> handler) {
-			write(data).onComplete(handler);
-		}
-		
-		@Override
 		public Future<Void> write(Buffer data) {
 			output.appendBuffer(data);
 			return Future.succeededFuture();
@@ -57,9 +52,9 @@ class OutputToReadStreamTest {
 		}
 		
 		@Override
-		public void end(Handler<AsyncResult<Void>> handler) {
+		public Future<Void> end() {
 			resultHandler.handle(null);
-			handler.handle(Future.succeededFuture());
+			return Future.succeededFuture();
 		}
 		
 		@Override
@@ -121,10 +116,12 @@ class OutputToReadStreamTest {
 		var cp = ctx.checkpoint();
 		var source = new ByteArrayInputStream("hello world".getBytes());
 		var testBuffer = Buffer.buffer();
-		var os = new OutputToReadStream(vertx).exceptionHandler(ctx::failNow);
-		os.pipeFromInput(source, new TestBufferWriteStream(testBuffer, res -> cp.flag()))
-		.onFailure(ctx::failNow);
-		ctx.awaitCompletion(3, TimeUnit.SECONDS);
-		assertThat(testBuffer.toString(), is(equalTo("hello world")));
+		try (final var os = new OutputToReadStream(vertx)) {
+			os.exceptionHandler(ctx::failNow);
+			os.pipeFromInput(source, new TestBufferWriteStream(testBuffer, res -> cp.flag()))
+			.onFailure(ctx::failNow);
+			ctx.awaitCompletion(3, TimeUnit.SECONDS);
+			assertThat(testBuffer.toString(), is(equalTo("hello world")));
+		}
 	}
 }

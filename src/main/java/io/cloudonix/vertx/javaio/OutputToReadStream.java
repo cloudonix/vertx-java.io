@@ -71,7 +71,7 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 	 */
 	public Future<Void> pipeFromInput(InputStream source, WriteStream<Buffer> sink) {
 		Promise<Void> promise = Promise.promise();
-		pipeTo(sink, promise);
+		pipeTo(sink).andThen(promise);
 		ForkJoinPool.commonPool().submit(() -> {
 			try (final InputStream is = source; final OutputStream os = this){
 				source.transferTo(this);
@@ -107,12 +107,9 @@ public class OutputToReadStream extends OutputStream implements ReadStream<Buffe
 	 * @param t error to be propagated down the stream
 	 */
 	public void sendError(Throwable t) {
-		context.executeBlocking(p -> {
-			try {
-				errorHandler.handle(t);
-			} finally {
-				p.tryComplete();
-			}
+		context.<Void>executeBlocking(() -> {
+			errorHandler.handle(t);
+			return null;
 		});
 	}
 	

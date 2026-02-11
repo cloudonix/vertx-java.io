@@ -72,15 +72,11 @@ class WriteToInputStreamTest {
 				return this;
 			}
 		}).pipeTo(stream).onFailure(ctx::failNow);
-		vertx.<byte[]>executeBlocking(p -> {
-			try {
-				stream.transferTo(sink);
-				stream.close();
-				sink.close();
-				p.complete(sink.toByteArray());
-			} catch (IOException e) {
-				p.fail(e);
-			}
+		vertx.<byte[]>executeBlocking(() -> {
+			stream.transferTo(sink);
+			stream.close();
+			sink.close();
+			return sink.toByteArray();
 		}).onComplete(ctx.succeeding(res -> {
 			assertThat(res, is(equalTo(text.getBytes())));
 			cp.flag();
@@ -142,15 +138,11 @@ class WriteToInputStreamTest {
 			}
 		}).pipeTo(stream).onSuccess(v -> {
 		}).onFailure(ctx::failNow);
-		vertx.<byte[]>executeBlocking(p -> {
-			try {
-				stream.transferTo(sink);
-				stream.close();
-				sink.close();
-				p.complete(sink.toByteArray());
-			} catch (IOException e) {
-				p.fail(e);
-			}
+		vertx.<byte[]>executeBlocking(() -> {
+			stream.transferTo(sink);
+			stream.close();
+			sink.close();
+			return sink.toByteArray();
 		}).onComplete(ctx.succeeding(res -> {
 			var bres = Buffer.buffer(res);
 			var test = text.getBytes();
