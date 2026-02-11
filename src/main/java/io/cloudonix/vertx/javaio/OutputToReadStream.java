@@ -31,12 +31,12 @@ import io.vertx.core.streams.WriteStream;
  * It is recommended to use this class in the context of a blocking try-with-resources block, to
  * ensure that streams are closed properly. For example:
  * 
- * <tt><pre>
+ * {@code
  * try (final OutputToReadStream os = new OutputToReadStream(vertx); final InputStream is = getInput()) {
  *   os.pipeTo(someWriteStream);
  *   is.transferTo(os);
  * }
- * </pre></tt>
+ * }
  * 
  * @author guss77
  */
