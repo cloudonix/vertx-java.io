@@ -1,6 +1,8 @@
 # vertx-java.io
 A set of utilities for integrating Vert.x IO with Java IO.
 
+The current release stream 5.x targets Vert.x 5.x. The previous release stream 1.x will be maintained to track the Vert.x 4.5.x releases.
+
 ## Usage
 
 In your `pom.xml` add the Jitpack repository:
@@ -19,7 +21,7 @@ Then add a dependency on this library:
 <dependency>
     <groupId>com.github.cloudonix</groupId>
     <artifactId>vertx-java.io</artifactId>
-    <version>1.4.1</version>
+    <version>5.0.0</version>
 </dependency>
 ```
 
