@@ -7,13 +7,76 @@
 	<version>5.0.8</version>
 	<name>Vert.x Java IO</name>
 	<description>Utilities for integrating Vert.x IO with Java IO</description>
-	
+	<url>https://github.com/cloudonix/vertx-java.io</url>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Oded Arbel</name>
+			<email>odeda@cloudonix.io</email>
+			<organization>Cloudonix</organization>
+			<organizationUrl>https://cloudonix.io</organizationUrl>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/cloudonix/vertx-java.io.git</connection>
+		<developerConnection>scm:git:ssh://github.com:cloudonix/vertx-java.io.git</developerConnection>
+		<url>http://github.com/cloudonix/vertx-java.io/tree/main</url>
+	</scm>
+
 	<properties>
 		<vertx.version>5.0.8</vertx.version>
 		<maven.compiler.release>11</maven.compiler.release>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
+	
+	<profiles>
+		<profile>
+			<id>maven-central</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.8.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>true</autoPublish>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.1.0</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<gpgArguments>
+										<arg>--pinentry-mode</arg>
+										<arg>loopback</arg>
+									</gpgArguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 	<dependencies>
 		<dependency>
